@@ -985,12 +985,13 @@ function _buildPromptCitations(bk){
   });
   _promptCits=result;
 }
+var _expandedPrompts=new Set();
 function togglePromptExpand(pid,btn){
   var row=document.getElementById('exp-'+pid);
   if(!row)return;
   var isOpen=row.style.display!=='none';
-  if(isOpen){row.style.display='none';btn.innerHTML='&#9654;';}
-  else{document.getElementById('expContent-'+pid).innerHTML=buildPromptExpandContent(pid);row.style.display='';btn.innerHTML='&#9660;';}
+  if(isOpen){row.style.display='none';btn.innerHTML='&#9654;';_expandedPrompts.delete(pid);}
+  else{document.getElementById('expContent-'+pid).innerHTML=buildPromptExpandContent(pid);row.style.display='';btn.innerHTML='&#9660;';_expandedPrompts.add(pid);}
 }
 function buildPromptExpandContent(pid){
   var rh=RAW_HISTORY[currentBrand];if(!rh)return '';
@@ -1161,6 +1162,15 @@ function applyPromptFilter(){
       '</td>'+
     '</tr>';
   }).join('');
+  /* restore any rows that were open before the re-render */
+  _expandedPrompts.forEach(function(pid){
+    var row=document.getElementById('exp-'+pid);
+    if(!row)return;
+    document.getElementById('expContent-'+pid).innerHTML=buildPromptExpandContent(pid);
+    row.style.display='';
+    var btn=row.previousElementSibling&&row.previousElementSibling.querySelector('button');
+    if(btn)btn.innerHTML='&#9660;';
+  });
 }
 /* sentiment */
 function renderSentiment(){
