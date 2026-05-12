@@ -341,10 +341,10 @@ tr.dom-row-open .dom-chev{transform:rotate(180deg)}
         <th class="pt-sort" onclick="setSortCol('prompt')" id="th-prompt">Prompt<span class="sort-arr" id="sa-prompt">&#8597;</span></th>
         <th class="pt-sort" onclick="setSortCol('visibility')" id="th-visibility">Visibility<span class="sort-arr sorted" id="sa-visibility">&#8595;</span></th>
         <th class="pt-sort" onclick="setSortCol('position')" id="th-position">Avg Position<span class="sort-arr" id="sa-position">&#8597;</span></th>
-        <th class="pt-sort" onclick="setSortCol('sentiment')" id="th-sentiment">Sentiment<span class="sort-arr" id="sa-sentiment">&#8597;</span></th>
+        <th class="pt-sort" onclick="setSortCol('sentiment')" id="th-sentiment">Sentiment<span class="info-tip" data-tip="Average sentiment of AI responses that mention the brand for this prompt. Positive = spoken about favorably." onclick="event.stopPropagation()" style="margin-left:4px"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="6"/><path d="M7 6v4" stroke-linecap="round"/><circle cx="7" cy="4.5" r=".5" fill="currentColor" stroke="none"/></svg></span><span class="sort-arr" id="sa-sentiment">&#8597;</span></th>
         <th>Models</th>
-        <th class="pt-sort" onclick="setSortCol('competitors')" id="th-competitors">Top Competitors<span class="sort-arr" id="sa-competitors">&#8597;</span></th>
-        <th>Top Citations</th>
+        <th class="pt-sort" onclick="setSortCol('competitors')" id="th-competitors">Top Competitors<span class="info-tip" data-tip="Brands mentioned most often alongside this brand in AI responses for this prompt." onclick="event.stopPropagation()" style="margin-left:4px"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="6"/><path d="M7 6v4" stroke-linecap="round"/><circle cx="7" cy="4.5" r=".5" fill="currentColor" stroke="none"/></svg></span><span class="sort-arr" id="sa-competitors">&#8597;</span></th>
+        <th>Top Citations<span class="info-tip" data-tip="Domains most frequently cited by AI models when answering this prompt." style="margin-left:4px"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="6"/><path d="M7 6v4" stroke-linecap="round"/><circle cx="7" cy="4.5" r=".5" fill="currentColor" stroke="none"/></svg></span></th>
       </tr></thead><tbody id="promptsTbody"></tbody></table>
     </div>
   </div>
@@ -1042,7 +1042,7 @@ function buildPromptExpandContent(pid){
     '<th style="padding:5px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink4)">URL</th>'+
     '<th style="padding:5px 10px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink4)">Cited</th>'+
     '<th style="padding:5px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink4)">Models</th>'+
-    '<th style="padding:5px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink4)">Competitors Mentioned</th>'+
+    '<th style="padding:5px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink4)">Competitors Mentioned<span class="info-tip" data-tip="Competitors that appeared in the same AI response as this URL — co-occurrence, not a direct link." style="margin-left:4px"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="6"/><path d="M7 6v4" stroke-linecap="round"/><circle cx="7" cy="4.5" r=".5" fill="currentColor" stroke="none"/></svg></span></th>'+
     '</tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 function renderPrompts(){
