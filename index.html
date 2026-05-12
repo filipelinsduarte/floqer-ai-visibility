@@ -337,6 +337,7 @@ tr.dom-row-open .dom-chev{transform:rotate(180deg)}
     </div>
     <div class="cc-body np">
       <table class="ptable"><thead><tr>
+        <th style="width:28px"></th>
         <th class="pt-sort" onclick="setSortCol('prompt')" id="th-prompt">Prompt<span class="sort-arr" id="sa-prompt">&#8597;</span></th>
         <th class="pt-sort" onclick="setSortCol('visibility')" id="th-visibility">Visibility<span class="sort-arr sorted" id="sa-visibility">&#8595;</span></th>
         <th class="pt-sort" onclick="setSortCol('position')" id="th-position">Avg Position<span class="sort-arr" id="sa-position">&#8597;</span></th>
@@ -984,6 +985,66 @@ function _buildPromptCitations(bk){
   });
   _promptCits=result;
 }
+function togglePromptExpand(pid,btn){
+  var row=document.getElementById('exp-'+pid);
+  if(!row)return;
+  var isOpen=row.style.display!=='none';
+  if(isOpen){row.style.display='none';btn.innerHTML='&#9654;';}
+  else{document.getElementById('expContent-'+pid).innerHTML=buildPromptExpandContent(pid);row.style.display='';btn.innerHTML='&#9660;';}
+}
+function buildPromptExpandContent(pid){
+  var rh=RAW_HISTORY[currentBrand];if(!rh)return '';
+  var runDates=rh.runDates||[];var maxDate=runDates.length?runDates[runDates.length-1]:null;
+  var cutoffDate=null,lastRunOnly=false,customEndExp=null;
+  if(currentTimeRange==='last-run'){lastRunOnly=true;}
+  else if(currentTimeRange==='last-7'&&maxDate){cutoffDate=_daysBack(maxDate,7);}
+  else if(currentTimeRange==='last-14'&&maxDate){cutoffDate=_daysBack(maxDate,14);}
+  else if(currentTimeRange==='last-20'&&maxDate){cutoffDate=_daysBack(maxDate,20);}
+  else if(currentTimeRange==='custom'&&customStartDate&&customEndDate){cutoffDate=customStartDate;customEndExp=customEndDate;}
+  function expInRange(date){if(!date)return true;if(lastRunOnly)return date===maxDate;if(customEndExp)return date>=cutoffDate&&date<=customEndExp;if(cutoffDate)return date>=cutoffDate;return true;}
+  var prompt=(rh.prompts||[]).find(function(rp){return rp.id===pid;});
+  if(!prompt)return '';
+  var urlData={};
+  (prompt.entries||[]).filter(function(e){
+    return expInRange(e.date)&&(activeModel==='all'||e.model===activeModel);
+  }).forEach(function(e){
+    (e.srcs||[]).forEach(function(src){
+      if(!src.u)return;
+      if(!urlData[src.u])urlData[src.u]={url:src.u,title:src.t||'',count:0,models:{},comps:{}};
+      urlData[src.u].count++;
+      urlData[src.u].models[e.model]=(urlData[src.u].models[e.model]||0)+1;
+      (e.comps||[]).forEach(function(c){if(c)urlData[src.u].comps[c]=(urlData[src.u].comps[c]||0)+1;});
+    });
+  });
+  var urls=Object.values(urlData).sort(function(a,b){return b.count-a.count;}).slice(0,10);
+  if(!urls.length)return '<div style="padding:10px 0 14px;color:var(--ink4);font-size:12px">No citations in selected range.</div>';
+  var rows=urls.map(function(u){
+    var domain=_extractDomainJS(u.url);
+    var label=u.title&&u.title!==u.url?u.title:u.url;if(label.length>65)label=label.slice(0,65)+'…';
+    var modelBadges=Object.keys(u.models).map(function(mk){
+      var mm=MODEL_META[mk]||{domain:'google.com',label:mk};
+      return '<span class="fav-wrap" data-tip="'+mm.label+' · '+u.models[mk]+'x"><img style="width:13px;height:13px;border-radius:2px" src="'+fav(mm.domain)+'" onerror="this.style.display=\'none\'"></span>';
+    }).join('');
+    var compBadges=Object.keys(u.comps).sort(function(a,b){return u.comps[b]-u.comps[a];}).slice(0,4).map(function(c){
+      var cd=(typeof COMP_DOMAINS!=='undefined'&&COMP_DOMAINS[c])||(c.toLowerCase().replace(/\s+/g,'')+'.com');
+      return '<span class="fav-wrap" data-tip="'+c+' · '+u.comps[c]+'x"><img style="width:13px;height:13px;border-radius:2px" src="'+fav(cd)+'" onerror="this.style.display=\'none\'"></span>';
+    }).join('');
+    return '<tr style="border-top:1px solid var(--border)">'+
+      '<td style="padding:6px 10px"><div style="display:flex;align-items:center;gap:6px;max-width:360px"><img src="'+fav(domain)+'" style="width:13px;height:13px;flex-shrink:0;border-radius:2px" onerror="this.style.display=\'none\'"><a href="'+u.url+'" target="_blank" rel="noopener" style="font-size:12px;color:var(--v);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+u.url+'">'+label+'</a></div></td>'+
+      '<td style="padding:6px 10px;text-align:center;font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap">'+u.count+'×</td>'+
+      '<td style="padding:6px 10px"><div style="display:flex;gap:3px;flex-wrap:wrap">'+modelBadges+'</div></td>'+
+      '<td style="padding:6px 10px"><div style="display:flex;gap:3px;flex-wrap:wrap">'+(compBadges||'<span style="font-size:11px;color:var(--ink4)">—</span>')+'</div></td>'+
+    '</tr>';
+  }).join('');
+  return '<div style="padding:2px 0 10px">'+
+    '<table style="width:100%;border-collapse:collapse">'+
+    '<thead><tr style="background:var(--surface)">'+
+    '<th style="padding:5px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink4)">URL</th>'+
+    '<th style="padding:5px 10px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink4)">Cited</th>'+
+    '<th style="padding:5px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink4)">Models</th>'+
+    '<th style="padding:5px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink4)">Competitors Mentioned</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
 function renderPrompts(){
   var bk=BRAND_CFG[currentBrand].key;_pd=D.prompts[bk];_buildPromptComps(currentBrand);_buildPromptCitations(currentBrand);
   document.getElementById('promptsSub').textContent=_pd.length+' prompts tracked · '+(activeModel==='all'?'all models':(MODEL_META[activeModel]||{label:activeModel}).label);
@@ -1004,7 +1065,7 @@ function applyPromptFilter(){
   });
   data=sortPrompts(data);
   var tbody=document.getElementById('promptsTbody');
-  if(!data.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--ink4)">No prompts match filter</td></tr>';return;}
+  if(!data.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--ink4)">No prompts match filter</td></tr>';return;}
   tbody.innerHTML=data.map(function(p){
     /* visibility */
     var visBadge,mentionedModels;
@@ -1083,7 +1144,22 @@ function applyPromptFilter(){
       return '<div class="comp-iw"><img src="'+fav(pc.domain)+'" onerror="this.style.display=\'none\'"><div class="comp-itip">'+tip+'</div></div>';
     }).join('');
     if(!citIcons)citIcons='<span style="color:var(--ink4);font-size:11px">-</span>';
-    return '<tr><td><div class="pt-text">'+p.text+'</div></td><td>'+visBadge+'</td><td>'+posBadge+'</td><td>'+sentBadge+'</td><td><div class="model-dots">'+dots+'</div></td><td><div class="comp-icons">'+compIcons+'</div></td><td><div class="comp-icons">'+citIcons+'</div></td></tr>';
+    var pid=p.id||'';
+    return '<tr>'+
+      '<td style="width:28px;text-align:center;padding:0">'+
+        '<button onclick="togglePromptExpand(\''+pid+'\',this)" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--ink3);padding:4px;line-height:1" title="Expand">&#9654;</button>'+
+      '</td>'+
+      '<td><div class="pt-text">'+p.text+'</div></td>'+
+      '<td>'+visBadge+'</td><td>'+posBadge+'</td><td>'+sentBadge+'</td>'+
+      '<td><div class="model-dots">'+dots+'</div></td>'+
+      '<td><div class="comp-icons">'+compIcons+'</div></td>'+
+      '<td><div class="comp-icons">'+citIcons+'</div></td>'+
+    '</tr>'+
+    '<tr id="exp-'+pid+'" style="display:none">'+
+      '<td colspan="8" style="padding:0 12px 0 36px;background:var(--surface)">'+
+        '<div id="expContent-'+pid+'"></div>'+
+      '</td>'+
+    '</tr>';
   }).join('');
 }
 /* sentiment */
